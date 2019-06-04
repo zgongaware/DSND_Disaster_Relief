@@ -1,16 +1,87 @@
+import pandas as pd
 import sys
+from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+from sklearn.metrics import classification_report, accuracy_score
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.multioutput import MultiOutputClassifier
+from sklearn.pipeline import Pipeline
+from sqlalchemy import create_engine
+import nltk
+
+# Download nltk libraries if necessary
+nltk.download(['punkt', 'wordnet', 'averaged_perceptron_tagger'])
 
 
 def load_data(database_filepath):
-    pass
+    """
+    Connect to database, retrieve data set, and split into X and Y sets
+    :param database_filepath:
+    :return:
+    """
+    # Connect to database
+    engine = create_engine(database_filepath)
+
+    # Read messages table to dataframe
+    df = pd.read_sql_table("messages", engine)
+
+    # Set message column as X feature set
+    X = df["message"]
+
+    # Isolate category columns
+    cat_cols = [col for col in df.columns if col not in
+                ['id', 'message', 'original', 'genre']]
+
+    # Set category columns as Y target set
+    Y = df[cat_cols]
+
+    return X, Y, cat_cols
 
 
 def tokenize(text):
-    pass
+    """
+    Tokenize, lemmatize, and clean message strings
+    :param text:
+    :return:
+    """
+    # Tokenize text string
+    tokens = word_tokenize(text)
+
+    # Initialize lemmatizer
+    lemmatizer = WordNetLemmatizer()
+
+    # Lemmatize and clean tokens
+    clean_tokens = []
+    for t in tokens:
+        clean_token = lemmatizer.lemmatize(t).lower().strip()
+        clean_tokens.append(clean_token)
+
+    return clean_tokens
 
 
 def build_model():
-    pass
+    """
+    Build model pipeline with transformation and evaluation steps
+    :return:
+    """
+
+    # Create model pipeline
+    pipeline = Pipeline([
+        ('vect', CountVectorizer(
+            tokenizer=tokenize,
+            max_df=1.0,
+            max_features=None)),
+        ('tfidf', TfidfTransformer(
+            use_idf=True)),
+        ('clf', MultiOutputClassifier(
+            estimator=RandomForestClassifier(
+                random_state=99),
+            n_jobs=-1))
+    ])
+
+    return pipeline
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
