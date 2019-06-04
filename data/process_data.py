@@ -76,6 +76,12 @@ def split_categories(df):
 
 
 def save_data(df, database_filename):
+    """
+    Connect to SQLite database and send dataframe to a table
+    :param df:
+    :param database_filename:
+    :return:
+    """
 
     engine = create_engine(database_filename)
 
