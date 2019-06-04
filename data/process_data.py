@@ -76,7 +76,10 @@ def split_categories(df):
 
 
 def save_data(df, database_filename):
-    pass  
+
+    engine = create_engine(database_filename)
+
+    df.to_sql('messages', engine, index=False)
 
 
 def main():
