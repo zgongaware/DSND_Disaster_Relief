@@ -1,0 +1,7 @@
+pandas
+sqlalchemy
+plotly
+scikit-learn
+nltk
+flask
+gunicorn
