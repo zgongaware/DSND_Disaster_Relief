@@ -13,7 +13,7 @@ from sqlalchemy import create_engine
 import nltk
 
 # Download nltk libraries if necessary
-nltk.download(['punkt', 'wordnet', 'averaged_perceptron_tagger'])
+nltk.download(["punkt", "wordnet", "averaged_perceptron_tagger"])
 
 
 def load_data(database_filepath):
@@ -32,8 +32,9 @@ def load_data(database_filepath):
     X = df["message"]
 
     # Isolate category columns
-    cat_cols = [col for col in df.columns if col not in
-                ['id', 'message', 'original', 'genre']]
+    cat_cols = [
+        col for col in df.columns if col not in ["id", "message", "original", "genre"]
+    ]
 
     # Set category columns as Y target set
     Y = df[cat_cols]
@@ -69,24 +70,25 @@ def build_model():
     """
 
     # Create model pipeline
-    pipeline = Pipeline([
-        ('vect', CountVectorizer(
-            tokenizer=tokenize,
-            max_df=1.0,
-            max_features=None,
-            stop_words='english',
-            ngram_range=(1, 2)
-        )),
-        ('tfidf', TfidfTransformer(
-            norm='l2',
-            use_idf=False
-        )),
-        ('clf', MultiOutputClassifier(
-            estimator=MultinomialNB(
-                alpha=0.01
+    pipeline = Pipeline(
+        [
+            (
+                "vect",
+                CountVectorizer(
+                    tokenizer=tokenize,
+                    max_df=1.0,
+                    max_features=None,
+                    stop_words="english",
+                    ngram_range=(1, 2),
+                ),
             ),
-            n_jobs=-1))
-    ])
+            ("tfidf", TfidfTransformer(norm="l2", use_idf=False)),
+            (
+                "clf",
+                MultiOutputClassifier(estimator=MultinomialNB(alpha=0.01), n_jobs=-1),
+            ),
+        ]
+    )
 
     return pipeline
 
@@ -117,36 +119,38 @@ def save_model(model, model_filepath):
     :return:
     """
 
-    pickle.dump(model, open(model_filepath, 'wb'))
+    pickle.dump(model, open(model_filepath, "wb"))
 
 
 def main():
     if len(sys.argv) == 3:
         database_filepath, model_filepath = sys.argv[1:]
-        print('Loading data...\n    DATABASE: {}'.format(database_filepath))
+        print("Loading data...\n    DATABASE: {}".format(database_filepath))
         X, Y, category_names = load_data(database_filepath)
         X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2)
-        
-        print('Building model...')
+
+        print("Building model...")
         model = build_model()
-        
-        print('Training model...')
+
+        print("Training model...")
         model.fit(X_train, Y_train)
-        
-        print('Evaluating model...')
+
+        print("Evaluating model...")
         evaluate_model(model, X_test, Y_test, category_names)
 
-        print('Saving model...\n    MODEL: {}'.format(model_filepath))
+        print("Saving model...\n    MODEL: {}".format(model_filepath))
         save_model(model, model_filepath)
 
-        print('Trained model saved!')
+        print("Trained model saved!")
 
     else:
-        print('Please provide the filepath of the disaster messages database '\
-              'as the first argument and the filepath of the pickle file to '\
-              'save the model to as the second argument. \n\nExample: python '\
-              'train_classifier.py ../data/DisasterResponse.db classifier.pkl')
+        print(
+            "Please provide the filepath of the disaster messages database "
+            "as the first argument and the filepath of the pickle file to "
+            "save the model to as the second argument. \n\nExample: python "
+            "train_classifier.py ../data/DisasterResponse.db classifier.pkl"
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
