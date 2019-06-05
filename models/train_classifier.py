@@ -1,12 +1,13 @@
 import pandas as pd
+import pickle
 import sys
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
-from sklearn.metrics import classification_report, accuracy_score
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.metrics import classification_report
+from sklearn.model_selection import train_test_split
 from sklearn.multioutput import MultiOutputClassifier
+from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import Pipeline
 from sqlalchemy import create_engine
 import nltk
@@ -72,12 +73,18 @@ def build_model():
         ('vect', CountVectorizer(
             tokenizer=tokenize,
             max_df=1.0,
-            max_features=None)),
+            max_features=None,
+            stop_words='english',
+            ngram_range=(1, 2)
+        )),
         ('tfidf', TfidfTransformer(
-            use_idf=True)),
+            norm='l2',
+            use_idf=False
+        )),
         ('clf', MultiOutputClassifier(
-            estimator=RandomForestClassifier(
-                random_state=99),
+            estimator=MultinomialNB(
+                alpha=0.01
+            ),
             n_jobs=-1))
     ])
 
@@ -85,11 +92,32 @@ def build_model():
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
-    pass
+    """
+    Evaluate model using test splits.  Print classification report for each category.
+    :param model:
+    :param X_test:
+    :param Y_test:
+    :param category_names:
+    :return:
+    """
+    # Generate predictions
+    y_pred = model.predict(X_test)
+
+    # Evaluate each category
+    for i, c in enumerate(category_names):
+        print("***", c, "***")
+        print(classification_report(Y_test[c].values, y_pred[:, i]))
 
 
 def save_model(model, model_filepath):
-    pass
+    """
+    Save model as pickle file
+    :param model:
+    :param model_filepath:
+    :return:
+    """
+
+    pickle.dump(model, open(model_filepath, 'wb'))
 
 
 def main():
